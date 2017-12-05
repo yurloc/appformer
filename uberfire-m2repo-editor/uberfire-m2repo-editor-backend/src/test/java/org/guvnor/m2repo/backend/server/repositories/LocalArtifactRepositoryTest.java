@@ -18,18 +18,38 @@
 package org.guvnor.m2repo.backend.server.repositories;
 
 import java.io.File;
+import java.net.URL;
 
+import org.appformer.maven.integration.embedder.MavenSettings;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 public class LocalArtifactRepositoryTest {
 
+    private String rootDir;
+
+    @Before
+    public void setUpRepository() {
+        String originalCustomSettings = System.getProperty(MavenSettings.CUSTOM_SETTINGS_PROPERTY);
+        try {
+            URL settingsURL = LocalArtifactRepositoryTest.class.getResource("test-settings.xml");
+            System.setProperty(MavenSettings.CUSTOM_SETTINGS_PROPERTY, settingsURL.toExternalForm());
+            rootDir = new LocalArtifactRepository("test").getRootDir();
+        } finally {
+            if (originalCustomSettings == null) {
+                System.clearProperty(MavenSettings.CUSTOM_SETTINGS_PROPERTY);
+            } else {
+                System.setProperty(MavenSettings.CUSTOM_SETTINGS_PROPERTY, originalCustomSettings);
+            }
+        }
+    }
+
     @Test
-    public void testGetRootDir() throws Exception {
-        LocalArtifactRepository repository = new LocalArtifactRepository("test");
-        String rootDir = repository.getRootDir();
+    public void testGetRootDirFromCustomSettings() throws Exception {
         assertNotNull(rootDir);
+        assertTrue(rootDir.endsWith("/TEST_REPO"));
         File rootDirFile = new File(rootDir);
         assertTrue(rootDirFile.isDirectory());
     }
